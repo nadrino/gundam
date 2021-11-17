@@ -50,18 +50,42 @@ void FitSampleSet::initialize() {
 
   LogAssert(not _config_.empty(), "_config_ is not set." << std::endl);
 
-  _dataEventType_ = DataEventTypeEnumNamespace::toEnum(
-    JsonUtils::fetchValue<std::string>(_config_, "dataEventType"), true
-    );
+  _dataEventType_ = DataEventTypeEnumNamespace::toEnum(JsonUtils::fetchValue<std::string>(_config_, "dataEventType"), true );
   LogInfo << "Data events type is set to: " << DataEventTypeEnumNamespace::toString(_dataEventType_) << std::endl;
 
   LogInfo << "Reading samples definition..." << std::endl;
+/*  auto fitSampleListConfig0 = JsonUtils::fetchValue(_config_, "fitSampleList0", nlohmann::json());
+  std::vector<FitSample> _fitSampleList0_;
+  for( const auto& fitSampleConfig0: fitSampleListConfig0 ){
+    _fitSampleList0_.emplace_back();
+    _fitSampleList0_.back().setConfig(fitSampleConfig0);
+    _fitSampleList0_.back().initialize();
+  }
+  
   auto fitSampleListConfig = JsonUtils::fetchValue(_config_, "fitSampleList", nlohmann::json());
-  for( const auto& fitSampleConfig: fitSampleListConfig ){
+  int i=0;
+  for(const auto& fitSampleConfig: fitSampleListConfig ){
+ // for( auto& sample : _fitSampleList0_ ){
+    FitSample sample = _fitSampleList0_[i];
+    if( not sample.isEnabled() ) continue;
+    _fitSampleList_.emplace_back();
+    _fitSampleList_.back().setConfig(fitSampleConfig);
+    _fitSampleList_.back().initialize();
+    i++;
+  }*/
+  bool _isEnabled_{false};
+  auto fitSampleListConfig = JsonUtils::fetchValue(_config_, "fitSampleList", nlohmann::json());
+  for( const auto& fitSampleConfig: fitSampleListConfig ){ 
+    _isEnabled_ = JsonUtils::fetchValue(fitSampleConfig, "isEnabled", true);
+    if( not _isEnabled_ ) {
+       LogDebug << "SAMPLE DISABLED!!" << std::endl;
+       continue;}
     _fitSampleList_.emplace_back();
     _fitSampleList_.back().setConfig(fitSampleConfig);
     _fitSampleList_.back().initialize();
   }
+
+
 
   LogInfo << "Creating parallelisable jobs" << std::endl;
 
@@ -77,6 +101,7 @@ void FitSampleSet::initialize() {
   // Fill bin event caches
   std::function<void(int)> updateSampleBinEventListFct = [this](int iThread){
     for( auto& sample : _fitSampleList_ ){
+      
       sample.getMcContainer().updateBinEventList(iThread);
       sample.getDataContainer().updateBinEventList(iThread);
     }
@@ -87,12 +112,14 @@ void FitSampleSet::initialize() {
   // Histogram fills
   std::function<void(int)> refillMcHistogramsFct = [this](int iThread){
     for( auto& sample : _fitSampleList_ ){
+      
       sample.getMcContainer().refillHistogram(iThread);
       sample.getDataContainer().refillHistogram(iThread);
     }
   };
   std::function<void()> rescaleMcHistogramsFct = [this](){
     for( auto& sample : _fitSampleList_ ){
+      
       sample.getMcContainer().rescaleHistogram();
       sample.getDataContainer().rescaleHistogram();
     }
@@ -125,6 +152,7 @@ double FitSampleSet::evalLikelihood() const{
 
   double llh = 0.;
   for( auto& sample : _fitSampleList_ ){
+    
     double sampleLlh = 0;
     for( int iBin = 1 ; iBin <= sample.getMcContainer().histogram->GetNbinsX() ; iBin++ ){
       sampleLlh += (*_likelihoodFunctionPtr_)(
@@ -141,7 +169,10 @@ double FitSampleSet::evalLikelihood() const{
 void FitSampleSet::loadAsimovData(){
   if( _dataEventType_ == DataEventType::Asimov ){
     LogWarning << "Asimov data selected: copying MC events..." << std::endl;
-    for( auto& sample : _fitSampleList_ ){
+    for( auto& sample : _fitSampleList_ ){      
+      
+      
+
       LogInfo << "Copying MC events in sample \"" << sample.getName() << "\"" << std::endl;
 
       sample.getDataContainer().eventList = sample.getMcContainer().eventList;

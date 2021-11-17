@@ -128,6 +128,7 @@ void Propagator::initialize() {
   } // dataSets
 
   for( auto& sample : _fitSampleSet_.getFitSampleList() ){
+    if( not sample.isEnabled() ) continue;
     LogInfo << "Total events loaded from file in \"" << sample.getName() << "\":" << std::endl
             << "-> mc: " << sample.getMcContainer().eventList.size() << " / data: " << sample.getDataContainer().eventList.size() << std::endl;
   }
@@ -141,7 +142,9 @@ void Propagator::initialize() {
 
   // TEMP: trim dial cache
   LogDebug << "Trimming event dial cache..." << std::endl;
-  for( auto& sample: _fitSampleSet_.getFitSampleList() ){
+  for( auto& sample: _fitSampleSet_.getFitSampleList() ){    
+    if( not sample.isEnabled() ) continue;
+
     for( auto& event : sample.getMcContainer().eventList ){
       event.trimDialCache();
     }
@@ -165,6 +168,7 @@ void Propagator::initialize() {
 
   LogInfo << "Set the current MC prior weights as nominal weight..." << std::endl;
   for( auto& sample : _fitSampleSet_.getFitSampleList() ){
+    if( not sample.isEnabled() ) continue;
     for( auto& event : sample.getMcContainer().eventList ){
       event.setNominalWeight(event.getEventWeight());
     }
@@ -172,7 +176,8 @@ void Propagator::initialize() {
 
   if( _fitSampleSet_.getDataEventType() == DataEventType::Asimov ){
     LogInfo << "Propagating prior weights on data Asimov events..." << std::endl;
-    for( auto& sample : _fitSampleSet_.getFitSampleList() ){
+    for( auto& sample : _fitSampleSet_.getFitSampleList() ){    
+      if( not sample.isEnabled() ) continue;
       sample.getDataContainer().histScale = sample.getMcContainer().histScale;
       int nEvents = int(sample.getMcContainer().eventList.size());
       for( int iEvent = 0 ; iEvent < nEvents ; iEvent++ ){
@@ -193,7 +198,8 @@ void Propagator::initialize() {
   _fitSampleSet_.updateSampleHistograms();
 
   // Now the data won't be refilled each time
-  for( auto& sample : _fitSampleSet_.getFitSampleList() ){
+  for( auto& sample : _fitSampleSet_.getFitSampleList() ){      
+    if( not sample.isEnabled() ) continue;
     sample.getDataContainer().isLocked = true;
   }
 
@@ -279,12 +285,14 @@ void Propagator::initializeThreads() {
 
   std::function<void(int)> refillSampleHistogramsFct = [this](int iThread){
     for( auto& sample : _fitSampleSet_.getFitSampleList() ){
+      if( not sample.isEnabled() ) continue;
       sample.getMcContainer().refillHistogram(iThread);
       sample.getDataContainer().refillHistogram(iThread);
     }
   };
   std::function<void()> refillSampleHistogramsPostParallelFct = [this](){
     for( auto& sample : _fitSampleSet_.getFitSampleList() ){
+      if( not sample.isEnabled() ) continue;
       sample.getMcContainer().rescaleHistogram();
       sample.getDataContainer().rescaleHistogram();
     }
