@@ -54,25 +54,7 @@ void FitSampleSet::initialize() {
   LogInfo << "Data events type is set to: " << DataEventTypeEnumNamespace::toString(_dataEventType_) << std::endl;
 
   LogInfo << "Reading samples definition..." << std::endl;
-/*  auto fitSampleListConfig0 = JsonUtils::fetchValue(_config_, "fitSampleList0", nlohmann::json());
-  std::vector<FitSample> _fitSampleList0_;
-  for( const auto& fitSampleConfig0: fitSampleListConfig0 ){
-    _fitSampleList0_.emplace_back();
-    _fitSampleList0_.back().setConfig(fitSampleConfig0);
-    _fitSampleList0_.back().initialize();
-  }
-  
-  auto fitSampleListConfig = JsonUtils::fetchValue(_config_, "fitSampleList", nlohmann::json());
-  int i=0;
-  for(const auto& fitSampleConfig: fitSampleListConfig ){
- // for( auto& sample : _fitSampleList0_ ){
-    FitSample sample = _fitSampleList0_[i];
-    if( not sample.isEnabled() ) continue;
-    _fitSampleList_.emplace_back();
-    _fitSampleList_.back().setConfig(fitSampleConfig);
-    _fitSampleList_.back().initialize();
-    i++;
-  }*/
+
   bool _isEnabled_{false};
   auto fitSampleListConfig = JsonUtils::fetchValue(_config_, "fitSampleList", nlohmann::json());
   for( const auto& fitSampleConfig: fitSampleListConfig ){ 
