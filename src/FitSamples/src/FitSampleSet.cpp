@@ -23,7 +23,8 @@ FitSampleSet::~FitSampleSet() { this->reset(); }
 void FitSampleSet::reset() {
   _isInitialized_ = false;
   _config_.clear();
-
+//  _statFluctuation_ = false;
+  
   _likelihoodFunctionPtr_ = nullptr;
   _fitSampleList_.clear();
   _dataEventType_ = DataEventType::Unset;
@@ -52,7 +53,9 @@ void FitSampleSet::initialize() {
 
   _dataEventType_ = DataEventTypeEnumNamespace::toEnum(JsonUtils::fetchValue<std::string>(_config_, "dataEventType"), true );
   LogInfo << "Data events type is set to: " << DataEventTypeEnumNamespace::toString(_dataEventType_) << std::endl;
-
+  _statFluctuation_ = JsonUtils::fetchValue(_config_, "statFluctuation", true);
+  LogDebug<< "Statistical fluctuations on data are : "<<(_statFluctuation_ == false ?  "OFF" : "ON")<<std::endl;
+  
   LogInfo << "Reading samples definition..." << std::endl;
 
   bool _isEnabled_{false};
@@ -60,7 +63,8 @@ void FitSampleSet::initialize() {
   for( const auto& fitSampleConfig: fitSampleListConfig ){ 
     _isEnabled_ = JsonUtils::fetchValue(fitSampleConfig, "isEnabled", true);
     if( not _isEnabled_ ) {
-       LogDebug << "SAMPLE DISABLED!!" << std::endl;
+       std::string _Name_ = JsonUtils::fetchValue<std::string>(fitSampleConfig, "name");
+       LogDebug << "Sample "<<_Name_<<" is disabled" << std::endl;
        continue;}
     _fitSampleList_.emplace_back();
     _fitSampleList_.back().setConfig(fitSampleConfig);
@@ -131,7 +135,7 @@ bool FitSampleSet::empty() const {
   return _fitSampleList_.empty();
 }
 double FitSampleSet::evalLikelihood() const{
-
+  LogDebug<< "SONO QUIIIIIIII "<<std::endl;
   double llh = 0.;
   for( auto& sample : _fitSampleList_ ){
     
@@ -147,6 +151,8 @@ double FitSampleSet::evalLikelihood() const{
 
   return llh;
 }
+
+
 
 void FitSampleSet::loadAsimovData(){
   if( _dataEventType_ == DataEventType::Asimov ){
@@ -166,6 +172,25 @@ void FitSampleSet::loadAsimovData(){
 //      for( size_t iEvent = 0 ; iEvent < dataEventList.size() ; iEvent++ ){
 //        dataEventList[iEvent] = mcEventList[iEvent];
 //      }
+    }
+  }
+}
+
+void FitSampleSet::applyStatFluctOnData(){
+
+ if(_statFluctuation_){
+     LogDebug<< "APPLY STAT FLUCT ON DATA "<<std::endl;
+     for( auto& sample : _fitSampleList_ ){
+      
+       for( int iBin = 1 ; iBin <= sample.getDataContainer().histogram->GetNbinsX() ; iBin++ ){
+  	 
+  	 double bincont = sample.getDataContainer().histogram->GetBinContent(iBin);
+  	 double val = gRandom->Poisson(bincont);
+  	 sample.getDataContainer().histogram->SetBinContent(iBin,val);
+  	 //if (iBin%50==0) LogDebug<< iBin << " " <<bincont<<" " << val<< std::endl;
+	 //if (iBin==1 || iBin==10)sample.getDataContainer().histogram->SetBinContent(iBin,1000);
+       }
+       
     }
   }
 }
