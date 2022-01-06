@@ -37,6 +37,7 @@ public:
 
   // Post init
   void loadAsimovData();
+  void applyStatFluctOnData();
 
   // Getters
   DataEventType getDataEventType() const;
@@ -57,6 +58,7 @@ public:
 private:
   bool _isInitialized_{false};
   bool _showTimeStats_{false};
+  bool _statFluctuation_{false};
   nlohmann::json _config_;
   DataEventType _dataEventType_{DataEventType::Unset};
 
