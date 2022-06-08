@@ -46,3 +46,7 @@ work/
 *.exe
 *.out
 *.app
+
+# Cached files
+._*
+.DS_Store
